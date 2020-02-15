@@ -1,55 +1,22 @@
 <?php
 
-//READ
-function test()
-{
+
+function test(){
+
     $pdo = pdoSqlConnect();
-    $query = "SELECT * FROM Test;";
+    $query = "SELECT * FROM test;";
+
 
     $st = $pdo->prepare($query);
-    //    $st->execute([$param,$param]);
     $st->execute();
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
-    $st = null;
+    $st=null;
     $pdo = null;
 
     return $res;
 }
-
-//READ
-function testDetail($testNo)
-{
-    $pdo = pdoSqlConnect();
-    $query = "SELECT * FROM Test WHERE no = ?;";
-
-    $st = $pdo->prepare($query);
-    $st->execute([$testNo]);
-    //    $st->execute();
-    $st->setFetchMode(PDO::FETCH_ASSOC);
-    $res = $st->fetchAll();
-
-    $st = null;
-    $pdo = null;
-
-    return $res[0];
-}
-
-
-function testPost($name)
-{
-    $pdo = pdoSqlConnect();
-    $query = "INSERT INTO Test (name) VALUES (?);";
-
-    $st = $pdo->prepare($query);
-    $st->execute([$name]);
-
-    $st = null;
-    $pdo = null;
-
-}
-
 
 function isValidUser($id, $pw){
     $pdo = pdoSqlConnect();

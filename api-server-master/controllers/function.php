@@ -7,6 +7,23 @@ use Google\Auth\ApplicationDefaultCredentials;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 
+
+function getFlightsList(){
+
+    $url = 'http://openapi.airport.co.kr/service/rest/FlightStatusList/getFlightStatusList?ServiceKey=yYI4BptcIG2hMFuopXy8iUQ%2B2rpXlcdG%2FLSnBPLCDtv%2BOCoT%2FpNYdGl9wpwasN7NcYwNCNtWHajjTZ6e4a8DGg%3D%3D&schLineType=D&schIOType=O&schAirCode=PUS&numOfRows=100000';
+    $ch = cURL_init();
+
+    cURL_setopt($ch, CURLOPT_URL, $url);
+    cURL_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+    $response = cURL_exec($ch);
+    cURL_close($ch);
+
+    $object = simplexml_load_string($response);
+
+    return $object->body->items;
+}
+
 function getSQLErrorException($errorLogs, $e, $req)
 {
     $res = (Object)Array();

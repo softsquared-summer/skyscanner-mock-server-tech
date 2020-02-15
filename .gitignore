@@ -1,6 +1,11 @@
 # Created by https://www.gitignore.io/api/phpstorm,composer
 # Edit at https://www.gitignore.io/?templates=phpstorm,composer
 
+
+###env
+/apt-server-master/ENV.php
+
+
 ### Logs ###
 /logs/*
 
