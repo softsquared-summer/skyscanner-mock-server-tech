@@ -3,7 +3,7 @@
 
 
 ###env
-/apt-server-master/ENV.php
+/api-server-master/ENV.php
 
 
 ### Logs ###
