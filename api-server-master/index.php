@@ -1,6 +1,6 @@
 <?php
 
-require 'ENV.php';
+require 'env.php';
 require './pdos/DatabasePdo.php';
 require './pdos/IndexPdo.php';
 require './vendor/autoload.php';
