@@ -1,7 +1,7 @@
 <?php
 
 
-function getFlightsList($key,$startAirCode){
+function getFlightsListAPI($key,$startAirCode){
 
     $url = "http://openapi.airport.co.kr/service/rest/FlightStatusList/getFlightStatusList?ServiceKey={$key}&schLineType=D&schIOType=O&schAirCode={$startAirCode}&numOfRows=100000";
     $ch = cURL_init();

@@ -25,6 +25,30 @@ try {
             getLogs("./logs/errors.log");
             break;
 
+        /*
+         * API No. 3
+         * API Name : 테스트 Body & Insert API
+         * 마지막 수정 날짜 : 19.04.29
+         */
+        case "flightsList":
+            http_response_code(200);
+
+            $deAirPortCode = $_GET["deAirPortCode"];
+            $arAirPortCode = $_GET["arAirPortCode"];
+            $deDate = $_GET["deDate"];
+            $seatCode = $_GET["seatCode"];
+            $sortBy = $_GET["sortBy"];
+
+            if($sortBy == "price"){
+                $res->result = getFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode);
+            }
+
+            $res->isSuccess = TRUE;
+            $res->code = 100;
+            $res->message = "편도 항공권 리스트 조회 성공";
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
 
         /*
          * API No. 0
@@ -32,7 +56,7 @@ try {
          * 마지막 수정 날짜 : 19.04.29
          */
         case "synchronization":
-            http_response_code(200);
+            http_response_code(201);
             $airPortsList = getAirPortsList();
             $total = count($airPortsList);
             $date = "2020-02-12";
@@ -41,7 +65,7 @@ try {
 
             for($i=0;$i<$total;$i++){
                 $airPortCode = $airPortsList[$i]["airPortCode"];
-                $flightsList = getFlightsList(API_KEY,$airPortCode);
+                $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
                 addFlightsList($flightsList,$date);
             }
 

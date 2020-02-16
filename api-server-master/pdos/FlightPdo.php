@@ -19,6 +19,102 @@ function getAirPortsList(){
     
 }
 
+function getFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode){
+
+    $result = array();
+
+    $pdo = pdoSqlConnect();
+
+    $query = "SELECT count(*) AS count
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?;";
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+    $totalCount = $res[0]["count"];
+
+    $result["total"] = $totalCount;
+
+    if($totalCount == 0){
+        return "티켓정보가 없습니다";
+    }
+
+    $query = "SELECT DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
+                ORDER BY f.deDate ASC;";
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $h=0;
+    $m=0;
+    for($w=0;$w<$totalCount;$w++){
+        $h = $h + $res[$w]["hour"];
+        $m = $m + $res[$w]["min"];
+    }
+
+
+    $avg = ($m +($h*60))/$totalCount;
+
+    $result["timeGapAvgMin"] = floor($avg);
+
+
+
+    $query = "SELECT airLineKr, MIN(adultPrice) as price
+                FROM
+                (
+                SELECT f.airLineKr,p.adultPrice
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
+                ) as t
+                GROUP BY airLineKr ORDER BY price ASC;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $airLineList = $st->fetchAll();
+    $airLineLegnth = count($airLineList);
+
+    for($i=0; $i<$airLineLegnth; $i++){
+        $temp = [];
+
+        $airLineName = $airLineList[$i]["airLineKr"];
+        $minPrice = "₩".number_format($airLineList[$i]["price"]);
+
+        $query = "SELECT DATE_FORMAT(f.deDate,'%H:%i') AS time
+                    FROM flights AS f
+                    JOIN prices AS p
+                    ON f.id = p.flightId
+                    WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ? AND f.airLineKr= ?
+                    ORDER BY f.deDate ASC;";
+        $st = $pdo->prepare($query);
+        $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode,$airLineName]);
+        $st->setFetchMode(PDO::FETCH_ASSOC);
+        $timeList = $st->fetchAll();
+
+        $temp["airLineKr"] = $airLineName;
+        $temp["minPrice"] = $minPrice;
+        $temp["timeList"] = $timeList;
+
+        $result["list"][]=$temp;
+    }
+
+    $st=null;
+    $pdo = null;
+
+    return $result;
+
+}
+
 function addFlightsList($flightsList,$date){
 
     $flightsList = $flightsList["item"];
@@ -50,31 +146,34 @@ function addFlightsList($flightsList,$date){
         $deAirPortCode = $flightsList[$i]["airport"];
         $arAirPortCode = $flightsList[$i]["city"];
 
-        $query = "INSERT INTO flights (airPlaneCode,airLineKr,airLineEn,deAirPortCode,arAirPortCode,deDate,arDate) VALUES (?,?,?,?,?,?,?);";
-        $st = $pdo->prepare($query);
-        $st->execute([$airPlaneCode,$airLineKr,$airLineEn,$deAirPortCode,$arAirPortCode,$deDate,$arDate]);
+        if($flightsList[$i]["rmkKor"] != "결항") {
 
-        $query = "SELECT max(id) as maxId FROM flights;";
-
-        $st = $pdo->prepare($query);
-        $st->execute();
-        $st->setFetchMode(PDO::FETCH_ASSOC);
-        $res = $st->fetchAll();
-        $flighId =  $res[0]["maxId"];
-
-        for($j=0;$j<4;$j++){
-
-            $seatName = $seatNameArray[$j];
-
-            $temp = random_int(0,25);
-            $adultPrice = $priceArray[$j][0]+(200*$temp);
-            $infantPrice = $priceArray[$j][1]+(200*$temp);
-            $childPrice = $priceArray[$j][2]+(200*$temp);
-
-            $query = "INSERT INTO prices (flightId,seatCode,seatName,adultPrice,infantPrice,childPrice) VALUES (?,?,?,?,?,?);";
+            $query = "INSERT INTO flights (airPlaneCode,airLineKr,airLineEn,deAirPortCode,arAirPortCode,deDate,arDate) VALUES (?,?,?,?,?,?,?);";
             $st = $pdo->prepare($query);
-            $st->execute([$flighId, $j, $seatName, $adultPrice, $infantPrice, $childPrice]);
+            $st->execute([$airPlaneCode, $airLineKr, $airLineEn, $deAirPortCode, $arAirPortCode, $deDate, $arDate]);
 
+            $query = "SELECT max(id) as maxId FROM flights;";
+
+            $st = $pdo->prepare($query);
+            $st->execute();
+            $st->setFetchMode(PDO::FETCH_ASSOC);
+            $res = $st->fetchAll();
+            $flighId = $res[0]["maxId"];
+
+            for ($j = 0; $j < 4; $j++) {
+
+                $seatName = $seatNameArray[$j];
+
+                $temp = random_int(0, 25);
+                $adultPrice = $priceArray[$j][0] + (200 * $temp);
+                $infantPrice = $priceArray[$j][1] + (200 * $temp);
+                $childPrice = $priceArray[$j][2] + (200 * $temp);
+
+                $query = "INSERT INTO prices (flightId,seatCode,seatName,adultPrice,infantPrice,childPrice) VALUES (?,?,?,?,?,?);";
+                $st = $pdo->prepare($query);
+                $st->execute([$flighId, $j, $seatName, $adultPrice, $infantPrice, $childPrice]);
+
+            }
         }
 
     }

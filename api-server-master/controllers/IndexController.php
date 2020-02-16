@@ -27,12 +27,12 @@ try {
          * API Name : 테스트 API
          * 마지막 수정 날짜 : 19.04.29
          */
-        case "test":
+        case "cityList":
             http_response_code(200);
-            $res->result = test();
+            $res->result = cityList();
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "테스트 성공";
+            $res->message = "운행가능한 도시 리스트 조회 성공";
             echo json_encode($res);
             break;
     }

@@ -1,11 +1,10 @@
 <?php
 
 
-function test(){
+function cityList(){
 
     $pdo = pdoSqlConnect();
-    $query = "SELECT * FROM test;";
-
+    $query = "SELECT * FROM airPorts;;";
 
     $st = $pdo->prepare($query);
     $st->execute();
