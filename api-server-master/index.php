@@ -25,7 +25,10 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/city', ['IndexController', 'cityList']);
 
 
-    $r->addRoute('GET', '/one-flight', ['FlightController', 'flightsList']);
+    $r->addRoute('GET', '/daily-one-flight', ['FlightController', 'DailyFlightsList']);
+
+    $r->addRoute('GET', '/one-flight', ['FlightController', 'OneFlightsList']);
+
 //    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
     
 

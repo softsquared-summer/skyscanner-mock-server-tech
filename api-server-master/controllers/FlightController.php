@@ -30,7 +30,30 @@ try {
          * API Name : 테스트 Body & Insert API
          * 마지막 수정 날짜 : 19.04.29
          */
-        case "flightsList":
+        case "DailyFlightsList":
+            http_response_code(200);
+
+            $deAirPortCode = $_GET["deAirPortCode"];
+            $arAirPortCode = $_GET["arAirPortCode"];
+            $deDate = $_GET["deDate"];
+            $seatCode = $_GET["seatCode"];
+
+
+            $res->result = getDailyFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode);
+
+
+            $res->isSuccess = TRUE;
+            $res->code = 100;
+            $res->message = "일일 직항 항공편 리스트 조회 성공";
+            echo json_encode($res);
+            break;
+
+        /*
+         * API No. 3
+         * API Name : 테스트 Body & Insert API
+         * 마지막 수정 날짜 : 19.04.29
+         */
+        case "OneFlightsList":
             http_response_code(200);
 
             $deAirPortCode = $_GET["deAirPortCode"];
@@ -39,14 +62,13 @@ try {
             $seatCode = $_GET["seatCode"];
             $sortBy = $_GET["sortBy"];
 
-            if($sortBy == "price"){
-                $res->result = getFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode);
-            }
+            $res->result = getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sortBy);
+
 
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "편도 항공권 리스트 조회 성공";
-            echo json_encode($res, JSON_NUMERIC_CHECK);
+            $res->message = "직항 항공편 리스트 조회 성공";
+            echo json_encode($res);
             break;
 
 
@@ -72,7 +94,7 @@ try {
             $res->isSuccess = TRUE;
             $res->code = 100;
             $res->message = "항공권 정보 동기화 성공";
-            echo json_encode($res,JSON_UNESCAPED_UNICODE);
+            echo json_encode($res);
             break;
 
 
