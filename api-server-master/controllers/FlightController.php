@@ -30,7 +30,7 @@ try {
          * API Name : 테스트 Body & Insert API
          * 마지막 수정 날짜 : 19.04.29
          */
-        case "DailyFlightsList":
+        case "dailyOneFlightsList":
             http_response_code(200);
 
             $deAirPortCode = $_GET["deAirPortCode"];
@@ -39,12 +39,12 @@ try {
             $seatCode = $_GET["seatCode"];
 
 
-            $res->result = getDailyFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode);
+            $res->result = getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode);
 
 
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "일일 직항 항공편 리스트 조회 성공";
+            $res->message = "일일 편도 항공편 리스트 조회 성공";
             echo json_encode($res);
             break;
 
@@ -53,7 +53,7 @@ try {
          * API Name : 테스트 Body & Insert API
          * 마지막 수정 날짜 : 19.04.29
          */
-        case "OneFlightsList":
+        case "oneFlightsList":
             http_response_code(200);
 
             $deAirPortCode = $_GET["deAirPortCode"];
@@ -67,9 +67,59 @@ try {
 
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "직항 항공편 리스트 조회 성공";
+            $res->message = "편도 항공편 리스트 조회 성공";
             echo json_encode($res);
             break;
+
+
+        /*
+         * API No. 3
+         * API Name : 테스트 Body & Insert API
+         * 마지막 수정 날짜 : 19.04.29
+         */
+        case "dailyRoundFlightsList":
+            http_response_code(200);
+
+            $deAirPortCode = $_GET["deAirPortCode"];
+            $arAirPortCode = $_GET["arAirPortCode"];
+            $deDate = $_GET["deDate"];
+            $arDate = $_GET["arDate"];
+            $seatCode = $_GET["seatCode"];
+
+
+            $res->result = getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seatCode);
+
+
+            $res->isSuccess = TRUE;
+            $res->code = 100;
+            $res->message = "일일 편도 항공편 리스트 조회 성공";
+            echo json_encode($res);
+            break;
+
+        /*
+         * API No. 3
+         * API Name : 테스트 Body & Insert API
+         * 마지막 수정 날짜 : 19.04.29
+         */
+        case "roundFlightsList":
+            http_response_code(200);
+
+            $deAirPortCode = $_GET["deAirPortCode"];
+            $arAirPortCode = $_GET["arAirPortCode"];
+            $deDate = $_GET["deDate"];
+            $arDate = $_GET["arDate"];
+            $seatCode = $_GET["seatCode"];
+            $sortBy = $_GET["sortBy"];
+
+            $res->result = getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seatCode,$sortBy);
+
+
+            $res->isSuccess = TRUE;
+            $res->code = 100;
+            $res->message = "편도 항공편 리스트 조회 성공";
+            echo json_encode($res);
+            break;
+
 
 
         /*

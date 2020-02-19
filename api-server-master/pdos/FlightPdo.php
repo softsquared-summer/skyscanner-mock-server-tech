@@ -19,7 +19,7 @@ function getAirPortsList(){
     
 }
 
-function getDailyFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode){
+function getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode){
 
     $result = array();
 
@@ -65,12 +65,12 @@ function getDailyFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode){
     $avg = floor($avg);
 
     if($avg<60){
-        $result["timeGapAvgMin"]=$avg."분";
+        $result["timeGapAvg"]=$avg."분";
     }
     else{
         $h=floor($avg/60);
         $m=$avg%60;
-        $result["timeGapAvgMin"]=$h."시간 ".$m."분";
+        $result["timeGapAvg"]=$h."시간 ".$m."분";
     }
 
 
@@ -84,7 +84,7 @@ function getDailyFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode){
                 ON f.id = p.flightId
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
                 ) as t
-                GROUP BY airLineKr,airLineEn ORDER BY price ASC;";
+                GROUP BY airLineKr,airLineEn ORDER BY price ASC, airLineKr ASC;";
 
     $st = $pdo->prepare($query);
     $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
@@ -176,7 +176,8 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
     }
     $result["type"] = "직항";
 
-    $query = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
+    $query = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
+                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
                 DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
                 FROM flights AS f
                 JOIN prices AS p
@@ -229,6 +230,220 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
 
 
     $st = null;
+    $pdo = null;
+
+    return $result;
+
+}
+
+function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seatCode){
+
+    $result = array();
+
+    $pdo = pdoSqlConnect();
+
+    $query = "SELECT count(*) AS count
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?;";
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+    $deTotalCount = $res[0]["count"];
+
+    $query = "SELECT count(*) AS count
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?;";
+    $st = $pdo->prepare($query);
+    $st->execute([$arAirPortCode,$deAirPortCode,$arDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $arTotalCount = $res[0]["count"];
+
+    $result["totalTicketCount"] = (int)($deTotalCount+$arTotalCount);
+
+    if($deTotalCount+$arTotalCount == 0){
+        return "티켓정보가 없습니다";
+    }
+
+    $query = "SELECT DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
+                ORDER BY f.deDate ASC;";
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $deHour=0;
+    $deMin=0;
+    for($w=0;$w<$deTotalCount;$w++){
+        $deHour = $deHour + $res[$w]["hour"];
+        $deMin = $deMin + $res[$w]["min"];
+    }
+
+    $query = "SELECT DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
+                ORDER BY f.deDate ASC;";
+    $st = $pdo->prepare($query);
+    $st->execute([$arAirPortCode,$deAirPortCode,$arDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $arHour=0;
+    $arMin=0;
+    for($w=0;$w<$arTotalCount;$w++){
+        $arHour = $arHour + $res[$w]["hour"];
+        $arMin = $arMin + $res[$w]["min"];
+    }
+
+    $h = $deHour+$arHour;
+    $m = $deMin+$arMin;
+
+    $avg = ($m +($h*60))/($deTotalCount+$arTotalCount);
+    $avg = floor($avg);
+
+    if($avg<60){
+        $result["timeGapAvg"]=$avg."분";
+    }
+    else{
+        $h=floor($avg/60);
+        $m=$avg%60;
+        $result["timeGapAvg"]=$h."시간 ".$m."분";
+    }
+
+
+
+    $query = "SELECT de.airLineKr, de.airLineEn, (de.price+ar.price) as totalPrice, de.price AS dePrice, ar.price AS arPrice
+                
+                FROM
+                
+                (
+                SELECT airLineKr, airLineEn, MIN(adultPrice) as price
+                FROM
+                (
+                SELECT f.airLineKr, f.airLineEn ,p.adultPrice
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
+                ) as t
+                GROUP BY airLineKr, airLineEn ORDER BY price ASC
+                ) AS de
+                
+                JOIN
+                
+                (
+                SELECT airLineKr, airLineEn, MIN(adultPrice) as price
+                FROM
+                (
+                SELECT f.airLineKr, f.airLineEn, p.adultPrice
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
+                ) as t
+                GROUP BY airLineKr, airLineEn ORDER BY price ASC
+                ) AS ar
+                
+                ON de.airLineKr = ar.airLineKr
+                ORDER BY totalPrice ASC, airLineKr ASC;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode,$arAirPortCode,$deAirPortCode,$arDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $airLineList = $st->fetchAll();
+    $airLineLegnth = count($airLineList);
+
+    for($i=0; $i<$airLineLegnth; $i++){
+        $temp = [];
+
+        $airLineKr = $airLineList[$i]["airLineKr"];
+        $airLineEn = $airLineList[$i]["airLineEn"];
+        $minPrice = "₩".number_format($airLineList[$i]["totalPrice"]);
+        $minDePrice = $airLineList[$i]["dePrice"];
+        $minArPrice = $airLineList[$i]["arPrice"];
+
+        $query = "SELECT f.id AS flightId, f.airPlaneCode, p.adultPrice AS priceGap, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
+                    FROM flights AS f
+                    JOIN prices AS p
+                    ON f.id = p.flightId
+                    WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ? AND f.airLineKr= ?
+                    ORDER BY f.deDate ASC;";
+        $st = $pdo->prepare($query);
+        $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode,$airLineKr]);
+        $st->setFetchMode(PDO::FETCH_ASSOC);
+        $deTimeList = $st->fetchAll();
+
+        for($f=0;$f<count($deTimeList);$f++){
+
+            $deTimeList[$f]["flightId"] = (int)$deTimeList[$f]["flightId"];
+
+            if($deTimeList[$f]["priceGap"]-$minDePrice == 0){
+
+                $deTimeList[$f]["priceGap"] = "같은가격대";
+            }
+            else if($deTimeList[$f]["priceGap"]-$minDePrice < 1000){
+
+                $deTimeList[$f]["priceGap"] = "+".($deTimeList[$f]["priceGap"]-$minDePrice);
+            }
+            else {
+
+                $deTimeList[$f]["priceGap"] = "+".number_format($deTimeList[$f]["priceGap"]-$minDePrice);
+            }
+
+        }
+
+        $query = "SELECT f.id AS flightId, f.airPlaneCode, p.adultPrice AS priceGap, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
+                    FROM flights AS f
+                    JOIN prices AS p
+                    ON f.id = p.flightId
+                    WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ? AND f.airLineKr= ?
+                    ORDER BY f.deDate ASC;";
+        $st = $pdo->prepare($query);
+        $st->execute([$arAirPortCode,$deAirPortCode,$arDate,$seatCode,$airLineKr]);
+        $st->setFetchMode(PDO::FETCH_ASSOC);
+        $arTimeList = $st->fetchAll();
+
+        for($f=0;$f<count($arTimeList);$f++){
+
+            $arTimeList[$f]["flightId"] = (int)$arTimeList[$f]["flightId"];
+
+            if($arTimeList[$f]["priceGap"]-$minArPrice == 0){
+
+                $arTimeList[$f]["priceGap"] = "같은가격대";
+            }
+            else if($arTimeList[$f]["priceGap"]-$minArPrice < 1000){
+
+                $arTimeList[$f]["priceGap"] = "+".($arTimeList[$f]["priceGap"]-$minArPrice);
+            }
+            else {
+
+                $arTimeList[$f]["priceGap"] = "+".number_format($arTimeList[$f]["priceGap"]-$minArPrice);
+            }
+
+        }
+
+        $temp["airLineKr"] = $airLineKr;
+        $temp["airLineEn"] = $airLineEn;
+        $temp["minPrice"] = $minPrice;
+        $temp["deTicketList"] = $deTimeList;
+        $temp["arTicketList"] = $arTimeList;
+
+        $result["airLineList"][]=$temp;
+    }
+
+    $st=null;
     $pdo = null;
 
     return $result;
