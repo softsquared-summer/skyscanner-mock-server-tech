@@ -556,6 +556,10 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
     $temp = [];
     $reTemp = [];
 
+    if(count($res)== 0 || count($reRes)== 0){
+        return "항공편이 존재하지 않습니다";
+    }
+
     if(count($res)>count($reRes)){
         $count = count($reRes);
     }
