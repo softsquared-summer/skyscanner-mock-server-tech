@@ -174,7 +174,6 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
     else if($sortBy == "timeGap"){
         $result["sortBy"] = "총 비행 시간";
     }
-    $result["type"] = "직항";
 
     $query = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
                 DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
@@ -213,6 +212,7 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
         $temp["airPlaneCode"]=$res[$i]["airPlaneCode"];
         $temp["airLineKr"]=$res[$i]["airLineKr"];
         $temp["airLineEn"]=$res[$i]["airLineEn"];
+        $temp["type"]="직항";;
         $temp["deTime"]=$res[$i]["deTime"];
         $temp["arTime"]=$res[$i]["arTime"];
         $temp["price"]="₩".number_format($res[$i]["price"]);
@@ -438,12 +438,182 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
         $temp["airLineEn"] = $airLineEn;
         $temp["minPrice"] = $minPrice;
         $temp["deTicketList"] = $deTimeList;
-        $temp["arTicketList"] = $arTimeList;
+        $temp["reTicketList"] = $arTimeList;
 
         $result["airLineList"][]=$temp;
     }
 
     $st=null;
+    $pdo = null;
+
+    return $result;
+
+}
+
+
+function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seatCode,$sortBy){
+
+    $result = [];
+
+    $pdo = pdoSqlConnect();
+
+    $query = "SELECT count(*) AS count
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?;";
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $deTotalCount = $res[0]["count"];
+
+    $query = "SELECT count(*) AS count
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?;";
+    $st = $pdo->prepare($query);
+    $st->execute([$arAirPortCode,$deAirPortCode,$arDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $arTotalCount = $res[0]["count"];
+
+    $result["totalTicketCount"] = (int)($deTotalCount+$arTotalCount);
+
+    if($sortBy == "price"){
+        $result["sortBy"] = "가격";
+    }
+    else if($sortBy == "deTime"){
+        $result["sortBy"] = "출국편 이륙 시간";
+    }
+    else if($sortBy == "arTime"){
+        $result["sortBy"] = "출국편 착륙 시간";
+    }
+    else if($sortBy == "reDeTime"){
+        $result["sortBy"] = "귀국편 이륙 시간";
+    }
+    else if($sortBy == "reArTime"){
+        $result["sortBy"] = "귀국편 착륙 시간";
+    }
+    else if($sortBy == "timeGap"){
+        $result["sortBy"] = "총 비행 시간";
+    }
+
+    $query = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
+                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
+                DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode =? ";
+
+    $reQuery = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
+                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
+                DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
+                FROM flights AS f
+                JOIN prices AS p
+                ON f.id = p.flightId
+                WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode =? ";
+
+    if($sortBy == "price"){
+        $query = $query."ORDER BY price";
+        $reQuery = $reQuery."ORDER BY price";
+    }
+    else if($sortBy == "deTime"){
+        $query = $query."ORDER BY deTime";
+        $reQuery = $reQuery."ORDER BY price";
+    }
+    else if($sortBy == "arTime"){
+        $query = $query."ORDER BY arTime";
+        $reQuery = $reQuery."ORDER BY price";
+    }
+    else if($sortBy == "reDeTime"){
+        $query = $query."ORDER BY price";
+        $reQuery = $reQuery."ORDER BY deTime";
+    }
+    else if($sortBy == "reArTime"){
+        $query = $query."ORDER BY price";
+        $reQuery = $reQuery."ORDER BY arTime";
+    }
+    else if($sortBy == "timeGap"){
+        $query = $query."ORDER BY timeGap";
+        $reQuery = $reQuery."ORDER BY timeGap";
+    }
+
+    $st = $pdo->prepare($query);
+    $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $res = $st->fetchAll();
+
+    $st = $pdo->prepare($reQuery);
+    $st->execute([$arAirPortCode,$deAirPortCode,$arDate,$seatCode]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $reRes = $st->fetchAll();
+
+    $temp = [];
+    $reTemp = [];
+
+    if(count($res)>count($reRes)){
+        $count = count($reRes);
+    }
+    else{
+        $count = count($res);
+    }
+
+    for($i=0;$i<$count;$i++){
+
+        $h = (int)$res[$i]["hour"];
+        $m = (int)$res[$i]["min"];
+
+        $temp["flightId"]=(int)$res[$i]["flightId"];
+        $temp["airPlaneCode"]=$res[$i]["airPlaneCode"];
+        $temp["airLineKr"]=$res[$i]["airLineKr"];
+        $temp["airLineEn"]=$res[$i]["airLineEn"];
+        $temp["type"]="직항";;
+        $temp["deTime"]=$res[$i]["deTime"];
+        $temp["arTime"]=$res[$i]["arTime"];
+        $temp["price"]="₩".number_format($res[$i]["price"]);
+
+        if($h>0){
+            $temp["timeGap"]=$h."시간 ".$m."분";
+        }
+        else{
+            $temp["timeGap"]=$m."분";
+        }
+
+        $h = (int)$reRes[$i]["hour"];
+        $m = (int)$reRes[$i]["min"];
+
+        $reTemp["flightId"]=(int)$reRes[$i]["flightId"];
+        $reTemp["airPlaneCode"]=$reRes[$i]["airPlaneCode"];
+        $reTemp["airLineKr"]=$reRes[$i]["airLineKr"];
+        $reTemp["airLineEn"]=$reRes[$i]["airLineEn"];
+        $reTemp["type"]="직항";;
+        $reTemp["deTime"]=$reRes[$i]["deTime"];
+        $reTemp["arTime"]=$reRes[$i]["arTime"];
+        $reTemp["price"]="₩".number_format($reRes[$i]["price"]);
+
+        if($h>0){
+            $reTemp["timeGap"]=$h."시간 ".$m."분";
+        }
+        else{
+            $reTemp["timeGap"]=$m."분";
+        }
+
+        $teemp = [];
+        $teemp["totalPrice"] = "₩".number_format($res[$i]["price"]+$reRes[$i]["price"]);
+        $teemp["deTicket"] = $temp;
+        $teemp["reTicket"] = $reTemp;
+
+        $result["ticketList"][]=$teemp;
+    }
+
+
+
+    $st = null;
     $pdo = null;
 
     return $result;

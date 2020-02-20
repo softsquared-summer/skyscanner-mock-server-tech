@@ -92,7 +92,7 @@ try {
 
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "일일 편도 항공편 리스트 조회 성공";
+            $res->message = "일일 왕복 항공편 리스트 조회 성공";
             echo json_encode($res);
             break;
 
@@ -116,7 +116,7 @@ try {
 
             $res->isSuccess = TRUE;
             $res->code = 100;
-            $res->message = "편도 항공편 리스트 조회 성공";
+            $res->message = "왕복 항공편 리스트 조회 성공";
             echo json_encode($res);
             break;
 
