@@ -33,7 +33,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
     $r->addRoute('GET', '/round-flight', ['FlightController', 'roundFlightsList']);
 
-//    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
+    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
     
 
 
