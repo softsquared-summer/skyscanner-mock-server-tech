@@ -39,7 +39,7 @@ function getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode)
     $result["totalTicketCount"] = (int)$totalCount;
 
     if($totalCount == 0){
-        return "티켓정보가 없습니다";
+        return null;
     }
 
     $query = "SELECT DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
@@ -64,27 +64,20 @@ function getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode)
     $avg = ($m +($h*60))/$totalCount;
     $avg = floor($avg);
 
-    if($avg<60){
-        $result["timeGapAvg"]=$avg."분";
-    }
-    else{
-        $h=floor($avg/60);
-        $m=$avg%60;
-        $result["timeGapAvg"]=$h."시간 ".$m."분";
-    }
+    $result["timeGapAvg"]=(int)$avg;
 
 
 
-    $query = "SELECT airLineKr,airLineEn,airLineImg, MIN(adultPrice) as price
+    $query = "SELECT airLineKr,airLineEn,airLineImg, MIN(adultPrice) as adultPrice, MIN(infantPrice) as infantPrice, MIN(childPrice) as childPrice
                 FROM
                 (
-                SELECT f.airLineKr,f.airLineEn,f.airLineImg,p.adultPrice
+                SELECT f.airLineKr,f.airLineEn,f.airLineImg,p.adultPrice,p.infantPrice,p.childPrice
                 FROM flights AS f
                 JOIN prices AS p
                 ON f.id = p.flightId
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
                 ) as t
-                GROUP BY airLineKr,airLineEn,airLineImg ORDER BY price ASC, airLineKr ASC;";
+                GROUP BY airLineKr,airLineEn,airLineImg ORDER BY adultPrice ASC, airLineKr ASC;";
 
     $st = $pdo->prepare($query);
     $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode]);
@@ -98,9 +91,11 @@ function getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode)
         $airLineKr = $airLineList[$i]["airLineKr"];
         $airLineEn = $airLineList[$i]["airLineEn"];
         $airLineImg = $airLineList[$i]["airLineImg"];
-        $minPrice = "₩".number_format($airLineList[$i]["price"]);
+        $minAdultPrice = (int)$airLineList[$i]["adultPrice"];
+        $minInfantPrice = (int)$airLineList[$i]["infantPrice"];
+        $minChildPrice = (int)$airLineList[$i]["childPrice"];
 
-        $query = "SELECT f.id AS flightId, f.airPlaneCode, p.adultPrice AS priceGap, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
+        $query = "SELECT f.id AS flightId, f.airPlaneCode, p.adultPrice AS adultPrice, p.infantPrice AS infantPrice, p.childPrice AS childPrice, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
                     FROM flights AS f
                     JOIN prices AS p
                     ON f.id = p.flightId
@@ -114,26 +109,18 @@ function getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode)
         for($f=0;$f<count($timeList);$f++){
 
             $timeList[$f]["flightId"] = (int)$timeList[$f]["flightId"];
-
-            if($timeList[$f]["priceGap"]-$airLineList[$i]["price"] == 0){
-
-                $timeList[$f]["priceGap"] = "같은가격대";
-            }
-            else if($timeList[$f]["priceGap"]-$airLineList[$i]["price"] < 1000){
-
-                $timeList[$f]["priceGap"] = "+".($timeList[$f]["priceGap"]-$airLineList[$i]["price"]);
-            }
-            else {
-
-                $timeList[$f]["priceGap"] = "+".number_format($timeList[$f]["priceGap"]-$airLineList[$i]["price"]);
-            }
+            $timeList[$f]["adultPrice"] = (int)$timeList[$f]["adultPrice"];
+            $timeList[$f]["infantPrice"] = (int)$timeList[$f]["infantPrice"];
+            $timeList[$f]["childPrice"] = (int)$timeList[$f]["childPrice"];
 
         }
 
         $temp["airLineKr"] = $airLineKr;
         $temp["airLineEn"] = $airLineEn;
         $temp["airLineImgUrl"] = $airLineImg;
-        $temp["minPrice"] = $minPrice;
+        $temp["minAdultPrice"] = $minAdultPrice;
+        $temp["minInfantPrice"] = $minInfantPrice;
+        $temp["minChildPrice"] = $minChildPrice;
         $temp["ticketList"] = $timeList;
 
         $result["airLineList"][]=$temp;
@@ -178,7 +165,7 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
     }
 
     $query = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,f.airLineImg,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
-                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
+                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS adultPrice, p.infantPrice AS infantPrice, p.childPrice AS childPrice, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
                 DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
                 FROM flights AS f
                 JOIN prices AS p
@@ -186,7 +173,7 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode =? ";
 
     if($sortBy == "price"){
-        $query = $query."ORDER BY price";
+        $query = $query."ORDER BY adultPrice";
     }
     else if($sortBy == "deTime"){
         $query = $query."ORDER BY deTime";
@@ -209,6 +196,7 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
 
         $h = (int)$res[$i]["hour"];
         $m = (int)$res[$i]["min"];
+        $time = ($h*60)+$m;
 
         $temp["flightId"]=(int)$res[$i]["flightId"];
         $temp["airPlaneCode"]=$res[$i]["airPlaneCode"];
@@ -218,14 +206,11 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
         $temp["type"]="직항";;
         $temp["deTime"]=$res[$i]["deTime"];
         $temp["arTime"]=$res[$i]["arTime"];
-        $temp["price"]="₩".number_format($res[$i]["price"]);
+        $temp["adultPrice"]=(int)$res[$i]["adultPrice"];
+        $temp["infantPrice"]=(int)$res[$i]["infantPrice"];
+        $temp["childPrice"]=(int)$res[$i]["childPrice"];
+        $temp["timeGap"]=$time;
 
-        if($h>0){
-            $temp["timeGap"]=$h."시간 ".$m."분";
-        }
-        else{
-            $temp["timeGap"]=$m."분";
-        }
 
         $result["ticketList"][] = $temp;
     }
@@ -316,51 +301,45 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
     $avg = ($m +($h*60))/($deTotalCount+$arTotalCount);
     $avg = floor($avg);
 
-    if($avg<60){
-        $result["timeGapAvg"]=$avg."분";
-    }
-    else{
-        $h=floor($avg/60);
-        $m=$avg%60;
-        $result["timeGapAvg"]=$h."시간 ".$m."분";
-    }
+    $result["timeGapAvg"]=(int)$avg;
 
 
 
-    $query = "SELECT de.airLineKr, de.airLineEn,de.airLineImg, (de.price+ar.price) as totalPrice, de.price AS dePrice, ar.price AS arPrice
+    $query = "SELECT de.airLineKr, de.airLineEn,de.airLineImg, de.adultPrice AS deAdultPrice,de.infantPrice AS deInfantPrice,de.childPrice AS deChildPrice,
+                ar.adultPrice AS arAdultPrice,ar.infantPrice AS arInfantPrice,ar.childPrice AS arChildPrice
                 
                 FROM
                 
                 (
-                SELECT airLineKr, airLineEn,airLineImg, MIN(adultPrice) as price
+                SELECT airLineKr, airLineEn,airLineImg, MIN(adultPrice) as adultPrice, MIN(infantPrice) as infantPrice, MIN(childPrice) as childPrice
                 FROM
                 (
-                SELECT f.airLineKr, f.airLineEn,f.airLineImg ,p.adultPrice
+                SELECT f.airLineKr, f.airLineEn,f.airLineImg ,p.adultPrice, p.infantPrice, p.childPrice
                 FROM flights AS f
                 JOIN prices AS p
                 ON f.id = p.flightId
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
                 ) as t
-                GROUP BY airLineKr, airLineEn,airLineImg ORDER BY price ASC
+                GROUP BY airLineKr, airLineEn,airLineImg ORDER BY adultPrice ASC
                 ) AS de
                 
                 JOIN
                 
                 (
-                SELECT airLineKr, airLineEn,airLineImg, MIN(adultPrice) as price
+                SELECT airLineKr, airLineEn,airLineImg, MIN(adultPrice) as adultPrice, MIN(infantPrice) as infantPrice, MIN(childPrice) as childPrice
                 FROM
                 (
-                SELECT f.airLineKr, f.airLineEn,f.airLineImg, p.adultPrice
+                SELECT f.airLineKr, f.airLineEn,f.airLineImg,p.adultPrice, p.infantPrice, p.childPrice
                 FROM flights AS f
                 JOIN prices AS p
                 ON f.id = p.flightId
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode = ?
                 ) as t
-                GROUP BY airLineKr, airLineEn,airLineImg ORDER BY price ASC
+                GROUP BY airLineKr, airLineEn,airLineImg ORDER BY adultPrice ASC
                 ) AS ar
                 
                 ON de.airLineKr = ar.airLineKr
-                ORDER BY totalPrice ASC, airLineKr ASC;";
+                ORDER BY deAdultPrice ASC, airLineKr ASC;";
 
     $st = $pdo->prepare($query);
     $st->execute([$deAirPortCode,$arAirPortCode,$deDate,$seatCode,$arAirPortCode,$deAirPortCode,$arDate,$seatCode]);
@@ -374,11 +353,14 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
         $airLineKr = $airLineList[$i]["airLineKr"];
         $airLineEn = $airLineList[$i]["airLineEn"];
         $airLineImg = $airLineList[$i]["airLineImg"];
-        $minPrice = "₩".number_format($airLineList[$i]["totalPrice"]);
-        $minDePrice = $airLineList[$i]["dePrice"];
-        $minArPrice = $airLineList[$i]["arPrice"];
+        $minDeAdultPrice = (int)$airLineList[$i]["deAdultPrice"];
+        $minDeInfantPrice = (int)$airLineList[$i]["deInfantPrice"];
+        $minDeChildPrice = (int)$airLineList[$i]["deChildPrice"];
+        $minReAdultPrice = (int)$airLineList[$i]["arAdultPrice"];
+        $minReInfantPrice = (int)$airLineList[$i]["arInfantPrice"];
+        $minReChildPrice = (int)$airLineList[$i]["arChildPrice"];
 
-        $query = "SELECT f.id AS flightId, f.airPlaneCode, p.adultPrice AS priceGap, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
+        $query = "SELECT f.id AS flightId, f.airPlaneCode,p.adultPrice AS adultPrice, p.infantPrice AS infantPrice, p.childPrice AS childPrice, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
                     FROM flights AS f
                     JOIN prices AS p
                     ON f.id = p.flightId
@@ -392,23 +374,13 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
         for($f=0;$f<count($deTimeList);$f++){
 
             $deTimeList[$f]["flightId"] = (int)$deTimeList[$f]["flightId"];
-
-            if($deTimeList[$f]["priceGap"]-$minDePrice == 0){
-
-                $deTimeList[$f]["priceGap"] = "같은가격대";
-            }
-            else if($deTimeList[$f]["priceGap"]-$minDePrice < 1000){
-
-                $deTimeList[$f]["priceGap"] = "+".($deTimeList[$f]["priceGap"]-$minDePrice);
-            }
-            else {
-
-                $deTimeList[$f]["priceGap"] = "+".number_format($deTimeList[$f]["priceGap"]-$minDePrice);
-            }
+            $deTimeList[$f]["adultPrice"]=(int)$deTimeList[$f]["adultPrice"];
+            $deTimeList[$f]["infantPrice"]=(int)$deTimeList[$f]["infantPrice"];
+            $deTimeList[$f]["childPrice"]=(int)$deTimeList[$f]["childPrice"];
 
         }
 
-        $query = "SELECT f.id AS flightId, f.airPlaneCode, p.adultPrice AS priceGap, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
+        $query = "SELECT f.id AS flightId, f.airPlaneCode,p.adultPrice AS adultPrice, p.infantPrice AS infantPrice, p.childPrice AS childPrice, DATE_FORMAT(f.deDate,'%H:%i') AS deTime, DATE_FORMAT(f.arDate,'%H:%i') AS arTime
                     FROM flights AS f
                     JOIN prices AS p
                     ON f.id = p.flightId
@@ -422,26 +394,21 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
         for($f=0;$f<count($arTimeList);$f++){
 
             $arTimeList[$f]["flightId"] = (int)$arTimeList[$f]["flightId"];
-
-            if($arTimeList[$f]["priceGap"]-$minArPrice == 0){
-
-                $arTimeList[$f]["priceGap"] = "같은가격대";
-            }
-            else if($arTimeList[$f]["priceGap"]-$minArPrice < 1000){
-
-                $arTimeList[$f]["priceGap"] = "+".($arTimeList[$f]["priceGap"]-$minArPrice);
-            }
-            else {
-
-                $arTimeList[$f]["priceGap"] = "+".number_format($arTimeList[$f]["priceGap"]-$minArPrice);
-            }
+            $arTimeList[$f]["adultPrice"]=(int)$arTimeList[$f]["adultPrice"];
+            $arTimeList[$f]["infantPrice"]=(int)$arTimeList[$f]["infantPrice"];
+            $arTimeList[$f]["childPrice"]=(int)$arTimeList[$f]["childPrice"];
 
         }
 
         $temp["airLineKr"] = $airLineKr;
         $temp["airLineEn"] = $airLineEn;
         $temp["airLineImgUrl"] = $airLineImg;
-        $temp["minPrice"] = $minPrice;
+        $temp["deMinAdultPrice"]=$minDeAdultPrice;
+        $temp["deMinInfantPrice"]=$minDeInfantPrice;
+        $temp["deMinChildPrice"]=$minDeChildPrice;
+        $temp["reMinAdultPrice"]=$minReAdultPrice;
+        $temp["reMinInfantPrice"]=$minReInfantPrice;
+        $temp["reMinChildPrice"]=$minReChildPrice;
         $temp["deTicketList"] = $deTimeList;
         $temp["reTicketList"] = $arTimeList;
 
@@ -508,7 +475,7 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
     }
 
     $query = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,f.airLineImg,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
-                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
+                DATE_FORMAT(f.arDate,'%H:%i') AS arTime,p.adultPrice AS adultPrice, p.infantPrice AS infantPrice, p.childPrice AS childPrice, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
                 DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
                 FROM flights AS f
                 JOIN prices AS p
@@ -516,7 +483,7 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode =? ";
 
     $reQuery = "SELECT f.id AS flightId, f.airPlaneCode, f.airLineKr, f.airLineEn,f.airLineImg,DATE_FORMAT(f.deDate,'%H:%i') AS deTime,
-                DATE_FORMAT(f.arDate,'%H:%i') AS arTime, p.adultPrice AS price, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
+                DATE_FORMAT(f.arDate,'%H:%i') AS arTime,p.adultPrice AS adultPrice, p.infantPrice AS infantPrice, p.childPrice AS childPrice, DATE_FORMAT(timediff(f.arDate,f.deDate),'%H:%i') AS timeGap,
                 DATE_FORMAT(timediff(f.arDate,f.deDate),'%H') AS hour, DATE_FORMAT(timediff(f.arDate,f.deDate),'%i') AS min
                 FROM flights AS f
                 JOIN prices AS p
@@ -524,23 +491,23 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
                 WHERE f.deAirPortCode = ? AND f.arAirPortCode = ? AND DATE(f.deDate) = ? AND p.seatCode =? ";
 
     if($sortBy == "price"){
-        $query = $query."ORDER BY price";
-        $reQuery = $reQuery."ORDER BY price";
+        $query = $query."ORDER BY adultPrice";
+        $reQuery = $reQuery."ORDER BY adultPrice";
     }
     else if($sortBy == "deTime"){
         $query = $query."ORDER BY deTime";
-        $reQuery = $reQuery."ORDER BY price";
+        $reQuery = $reQuery."ORDER BY adultPrice";
     }
     else if($sortBy == "arTime"){
         $query = $query."ORDER BY arTime";
-        $reQuery = $reQuery."ORDER BY price";
+        $reQuery = $reQuery."ORDER BY adultPrice";
     }
     else if($sortBy == "reDeTime"){
-        $query = $query."ORDER BY price";
+        $query = $query."ORDER BY adultPrice";
         $reQuery = $reQuery."ORDER BY deTime";
     }
     else if($sortBy == "reArTime"){
-        $query = $query."ORDER BY price";
+        $query = $query."ORDER BY adultPrice";
         $reQuery = $reQuery."ORDER BY arTime";
     }
     else if($sortBy == "timeGap"){
@@ -576,6 +543,7 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
 
         $h = (int)$res[$i]["hour"];
         $m = (int)$res[$i]["min"];
+        $time = ($h*60)+$m;
 
         $temp["flightId"]=(int)$res[$i]["flightId"];
         $temp["airPlaneCode"]=$res[$i]["airPlaneCode"];
@@ -585,17 +553,14 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
         $temp["type"]="직항";;
         $temp["deTime"]=$res[$i]["deTime"];
         $temp["arTime"]=$res[$i]["arTime"];
-        $temp["price"]="₩".number_format($res[$i]["price"]);
-
-        if($h>0){
-            $temp["timeGap"]=$h."시간 ".$m."분";
-        }
-        else{
-            $temp["timeGap"]=$m."분";
-        }
+        $temp["adultPrice"]=(int)$res[$i]["adultPrice"];
+        $temp["infantPrice"]=(int)$res[$i]["infantPrice"];
+        $temp["childPrice"]=(int)$res[$i]["childPrice"];
+        $temp["timeGap"]=$time;
 
         $h = (int)$reRes[$i]["hour"];
         $m = (int)$reRes[$i]["min"];
+        $time = ($h*60)+$m;
 
         $reTemp["flightId"]=(int)$reRes[$i]["flightId"];
         $reTemp["airPlaneCode"]=$reRes[$i]["airPlaneCode"];
@@ -605,17 +570,13 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
         $reTemp["type"]="직항";;
         $reTemp["deTime"]=$reRes[$i]["deTime"];
         $reTemp["arTime"]=$reRes[$i]["arTime"];
-        $reTemp["price"]="₩".number_format($reRes[$i]["price"]);
-
-        if($h>0){
-            $reTemp["timeGap"]=$h."시간 ".$m."분";
-        }
-        else{
-            $reTemp["timeGap"]=$m."분";
-        }
+        $reTemp["adultPrice"]=(int)$reRes[$i]["adultPrice"];
+        $reTemp["infantPrice"]=(int)$reRes[$i]["infantPrice"];
+        $reTemp["childPrice"]=(int)$reRes[$i]["childPrice"];
+        $reTemp["timeGap"]=$time;
 
         $teemp = [];
-        $teemp["totalPrice"] = "₩".number_format($res[$i]["price"]+$reRes[$i]["price"]);
+//        $teemp["comment"] = "";
         $teemp["deTicket"] = $temp;
         $teemp["reTicket"] = $reTemp;
 
@@ -690,11 +651,14 @@ function addFlightsList($flightsList,$date){
         else if($airLineKr == "하이에어"){
             $airLineImg = "http://kt999.site/airLineImg/hiair.png";
         }
+        else{
+            $airLineImg = null;
+        }
 
         $deAirPortCode = $flightsList[$i]["airport"];
         $arAirPortCode = $flightsList[$i]["city"];
 
-        if($flightsList[$i]["rmkKor"] != "결항") {
+        if($flightsList[$i]["rmkKor"] == "출발") {
 
             $query = "INSERT INTO flights (airPlaneCode,airLineKr,airLineEn,airLineImg,deAirPortCode,arAirPortCode,deDate,arDate) VALUES (?,?,?,?,?,?,?,?);";
             $st = $pdo->prepare($query);
