@@ -4,6 +4,7 @@ require '../env.php';
 require './pdos/DatabasePdo.php';
 require './pdos/IndexPdo.php';
 require './pdos/FlightPdo.php';
+require './pdos/AroundPdo.php';
 require './vendor/autoload.php';
 
 use \Monolog\Logger as Logger;
@@ -13,7 +14,7 @@ date_default_timezone_set('Asia/Seoul');
 ini_set('default_charset', 'utf8mb4');
 
 //에러출력하게 하는 코드
-error_reporting(E_ALL); ini_set("display_errors", 1);
+//error_reporting(E_ALL); ini_set("display_errors", 1);
 
 //Main Server API
 $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
@@ -33,7 +34,12 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
     $r->addRoute('GET', '/round-flight', ['FlightController', 'roundFlightsList']);
 
+
+    $r->addRoute('GET', '/flight', ['AroundController', 'aroundFlightsList']);
+
 //    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
+
+    
     
 
 });
@@ -91,6 +97,11 @@ switch ($routeInfo[0]) {
                 $handler = $routeInfo[1][1];
                 $vars = $routeInfo[2];
                 require './controllers/FlightController.php';
+                break;
+            case 'AroundController':
+                $handler = $routeInfo[1][1];
+                $vars = $routeInfo[2];
+                require './controllers/AroundController.php';
                 break;
             /*case 'EventController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];
