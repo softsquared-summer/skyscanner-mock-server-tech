@@ -5,6 +5,7 @@ require './pdos/DatabasePdo.php';
 require './pdos/IndexPdo.php';
 require './pdos/FlightPdo.php';
 require './pdos/AroundPdo.php';
+require './pdos/UserPdo.php';
 require './vendor/autoload.php';
 
 use \Monolog\Logger as Logger;
@@ -39,7 +40,14 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
 //    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
 
-    
+    $r->addRoute('POST', '/user', ['UserController', 'signUp']);
+
+
+    $r->addRoute('GET', '/auth/jwt', ['UserController', 'jwtAuth']);
+    $r->addRoute('POST', '/auth/email', ['UserController', 'emailAuth']);
+    $r->addRoute('POST', '/auth', ['UserController', 'signIn']);
+
+
     
 
 });
@@ -102,6 +110,11 @@ switch ($routeInfo[0]) {
                 $handler = $routeInfo[1][1];
                 $vars = $routeInfo[2];
                 require './controllers/AroundController.php';
+                break;
+            case 'UserController':
+                $handler = $routeInfo[1][1];
+                $vars = $routeInfo[2];
+                require './controllers/UserController.php';
                 break;
             /*case 'EventController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];

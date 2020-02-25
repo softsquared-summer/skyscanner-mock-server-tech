@@ -3,7 +3,6 @@ require 'function.php';
 require 'flightFunction.php';
 
 const JWT_SECRET_KEY = "TEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEYTEST_KEY";
-const API_KEY = "yYI4BptcIG2hMFuopXy8iUQ%2B2rpXlcdG%2FLSnBPLCDtv%2BOCoT%2FpNYdGl9wpwasN7NcYwNCNtWHajjTZ6e4a8DGg%3D%3D";
 
 $res = (Object)Array();
 header('Content-Type: json');

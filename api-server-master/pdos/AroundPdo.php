@@ -204,9 +204,6 @@ function getAroundRoundFlightsList($country,$deAirPortCode,$deDate,$arDate){
             $st->setFetchMode(PDO::FETCH_ASSOC);
             $res = $st->fetchAll()[0];
 
-            echo $deAirPortCode."\n";
-            echo $arAirPortCode."\n";
-
             $temp["country"] = $res["country"];
             $temp["minPrice"] = $deMinPrice + (int)$res["minPrice"];
 

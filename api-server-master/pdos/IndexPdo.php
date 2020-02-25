@@ -17,20 +17,27 @@ function cityList(){
     return $res;
 }
 
-function isValidUser($id, $pw){
+function isValidUser($email, $pw){
     $pdo = pdoSqlConnect();
-    $query = "SELECT EXISTS(SELECT * FROM User WHERE userId= ? AND userPw = ?) AS exist;";
+    $query = "SELECT id,email FROM users WHERE email = ? AND password = ?;";
 
 
     $st = $pdo->prepare($query);
-    //    $st->execute([$param,$param]);
-    $st->execute([$id, $pw]);
+    $st->execute([$email, $pw]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
-    $st=null;$pdo = null;
+    $st=null;
+    $pdo = null;
 
-    return intval($res[0]["exist"]);
+    $count=count($res);
+
+    if($count != 0){
+        return $res[0];
+    }
+    else{
+        return 0;
+    }
 
 }
 

@@ -549,7 +549,7 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
         $temp["airPlaneCode"]=$res[$i]["airPlaneCode"];
         $temp["airLineKr"]=$res[$i]["airLineKr"];
         $temp["airLineEn"]=$res[$i]["airLineEn"];
-        $temp["airLineImg"]=$res[$i]["airLineImg"];
+        $temp["airLineImgUrl"]=$res[$i]["airLineImg"];
         $temp["type"]="직항";;
         $temp["deTime"]=$res[$i]["deTime"];
         $temp["arTime"]=$res[$i]["arTime"];
@@ -566,7 +566,7 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
         $reTemp["airPlaneCode"]=$reRes[$i]["airPlaneCode"];
         $reTemp["airLineKr"]=$reRes[$i]["airLineKr"];
         $reTemp["airLineEn"]=$reRes[$i]["airLineEn"];
-        $reTemp["airLineImg"]=$reRes[$i]["airLineImg"];
+        $reTemp["airLineImgUrl"]=$reRes[$i]["airLineImg"];
         $reTemp["type"]="직항";;
         $reTemp["deTime"]=$reRes[$i]["deTime"];
         $reTemp["arTime"]=$reRes[$i]["arTime"];
