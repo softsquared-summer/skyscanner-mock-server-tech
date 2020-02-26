@@ -6,6 +6,7 @@ require './pdos/IndexPdo.php';
 require './pdos/FlightPdo.php';
 require './pdos/AroundPdo.php';
 require './pdos/UserPdo.php';
+require './pdos/SchedulePdo.php';
 require './vendor/autoload.php';
 
 use \Monolog\Logger as Logger;
@@ -39,6 +40,13 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('GET', '/flight', ['AroundController', 'aroundFlightsList']);
 
 //    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
+
+    $r->addRoute('GET', '/schedule', ['ScheduleController', 'scheduleList']);
+    $r->addRoute('GET', '/schedule/{roomId}', ['ScheduleController', 'schedule']);
+    $r->addRoute('POST', '/schedule', ['ScheduleController', 'scheduleAdd']);
+    $r->addRoute('PATCH', '/schedule', ['ScheduleController', 'scheduleUpdate']);
+    $r->addRoute('PATCH', '/schedule/item', ['ScheduleController', 'scheduleDelete']);
+    $r->addRoute('DELETE', '/schedule/{roomId}', ['ScheduleController', 'scheduleDeleteAll']);
 
     $r->addRoute('POST', '/user', ['UserController', 'signUp']);
 
@@ -115,6 +123,11 @@ switch ($routeInfo[0]) {
                 $handler = $routeInfo[1][1];
                 $vars = $routeInfo[2];
                 require './controllers/UserController.php';
+                break;
+            case 'ScheduleController':
+                $handler = $routeInfo[1][1];
+                $vars = $routeInfo[2];
+                require './controllers/ScheduleController.php';
                 break;
             /*case 'EventController':
                 $handler = $routeInfo[1][1]; $vars = $routeInfo[2];

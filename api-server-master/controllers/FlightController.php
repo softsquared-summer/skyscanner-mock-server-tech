@@ -11,20 +11,7 @@ $req = json_decode(file_get_contents("php://input"));
 try {
     addAccessLogs($accessLogs, $req);
     switch ($handler) {
-        case "index":
-            echo "API Server";
-            break;
-        case "ACCESS_LOGS":
-            //            header('content-type text/html charset=utf-8');
-            header('Content-Type: text/html; charset=UTF-8');
-            getLogs("./logs/access.log");
-            break;
-        case "ERROR_LOGS":
-            //            header('content-type text/html charset=utf-8');
-            header('Content-Type: text/html; charset=UTF-8');
-            getLogs("./logs/errors.log");
-            break;
-
+        
         /*
          * API No. 3
          * API Name : 테스트 Body & Insert API
