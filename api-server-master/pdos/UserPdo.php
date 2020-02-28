@@ -30,3 +30,14 @@ function signUp($email,$pw){
 
     return 100;
 }
+
+function byeBye($userId){
+    $pdo = pdoSqlConnect();
+    $query = "DELETE from users WHERE id = ?;";
+
+    $st = $pdo->prepare($query);
+    $st->execute([$userId]);
+
+    $st = null;
+    $pdo = null;
+}

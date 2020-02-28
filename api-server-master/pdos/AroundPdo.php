@@ -45,6 +45,10 @@ function getAroundOneFlightsList($country,$deAirPortCode,$deDate){
             $st->setFetchMode(PDO::FETCH_ASSOC);
             $res = $st->fetchAll()[0];
 
+            if(count($res)==0){
+                return $res;
+            }
+
             if($res["country"]=="대한민국"){
                 $res["imgUrl"]="http://kt999.site/img/korea.jpg";
             }
@@ -203,6 +207,10 @@ function getAroundRoundFlightsList($country,$deAirPortCode,$deDate,$arDate){
             $st->execute([$arAirPortCode,$deAirPortCode,$arDate,$countryList[$i]["country"]]);
             $st->setFetchMode(PDO::FETCH_ASSOC);
             $res = $st->fetchAll()[0];
+
+            if(count($res)==0){
+                return $res;
+            }
 
             $temp["country"] = $res["country"];
             $temp["minPrice"] = $deMinPrice + (int)$res["minPrice"];

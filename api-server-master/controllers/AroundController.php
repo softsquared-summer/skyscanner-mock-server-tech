@@ -38,6 +38,16 @@ try {
             $arDate = $_GET["arDate"];
             $country = $_GET["country"];
 
+            if($deDate != NULL && $arDate != NULL){
+                if(strtotime($deDate)>strtotime($arDate)){
+                    $res->isSuccess = FALSE;
+                    $res->code = 200;
+                    $res->message = "출국날짜와 귀국날짜가 올바르지 않습니다";
+                    echo json_encode($res);
+                    break;
+                }
+            }
+
             if($deDate == null){
                 //default
                 $deDate="2020-02-12";
@@ -49,16 +59,25 @@ try {
             }
 
 
+
             if($case == "O"){
-                $res->result = getAroundOneFlightsList($country,$deAirPortCode,$deDate);
+                $result = getAroundOneFlightsList($country,$deAirPortCode,$deDate);
                 $message = "편도 최저가 조회 성공";
             }
             else if($case == "R"){
-                $res->result = getAroundRoundFlightsList($country,$deAirPortCode,$deDate,$arDate);
+                $result = getAroundRoundFlightsList($country,$deAirPortCode,$deDate,$arDate);
                 $message = "왕복 최저가 조회 성공";
             }
 
+            if(count($result) == 0){
+                $res->isSuccess = TRUE;
+                $res->code = 300;
+                $res->message = "항공권 정보가 없습니다";
+                echo json_encode($res);
+                break;
+            }
 
+            $res->result = $result;
             $res->isSuccess = TRUE;
             $res->code = 100;
             $res->message = $message;

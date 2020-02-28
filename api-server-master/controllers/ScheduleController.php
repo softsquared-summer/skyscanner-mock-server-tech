@@ -35,6 +35,14 @@ try {
             $userId = $jwtAuth["id"];
             $result = scheduleList($userId);
 
+            if(count($result) == 0){
+                $res->isSuccess = TRUE;
+                $res->code = 300;
+                $res->message = "여행일정 정보가 없습니다";
+                echo json_encode($res);
+                break;
+            }
+
             $res->result = $result;
             $res->isSuccess = TRUE;
             $res->code = 100;
@@ -68,6 +76,14 @@ try {
             $userId = $jwtAuth["id"];
             $roomId = $vars["roomId"];
             $result = schedule($userId,$roomId);
+
+            if(count($result) == 0){
+                $res->isSuccess = TRUE;
+                $res->code = 300;
+                $res->message = "여행일정 정보가 없습니다";
+                echo json_encode($res);
+                break;
+            }
 
             $res->result = $result;
             $res->isSuccess = TRUE;
@@ -106,6 +122,37 @@ try {
             $infantCount = $req->infantCount;
             $childCount = $req->childCount;
 
+            if($roomId==null || $deFlightId==null){
+                $res->isSuccess = FALSE;
+                $res->code = 500;
+                $res->message = "필수적인 파라미터를 모두 입력해주세요";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+            }
+
+            if(!$seatCode){
+                $seatCode = 0;
+            }
+            if(!$adultCount){
+                $adultCount = 1;
+            }
+            if(!$infantCount){
+                $infantCount = 0;
+            }
+            if(!$childCount){
+                $childCount = 0;
+            }
+
+            $isAdded = scheduleItemAuth($userId,$deFlightId,$reFlightId);
+
+            if($isAdded != 0){
+                $res->isSuccess = FALSE;
+                $res->code = 300;
+                $res->message = "이미등록된 항공권입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+            }
+
             $result = scheduleAdd($userId,$roomId,$deFlightId,$reFlightId,$seatCode,$adultCount,$infantCount,$childCount);
 
             if($result){
@@ -115,8 +162,8 @@ try {
                 $res->message = "여행일정 등록 성공";
             }
             else{
-                $res->isSuccess = TRUE;
-                $res->code = 300;
+                $res->isSuccess = FALSE;
+                $res->code = 400;
                 $res->message = "여행일정 등록 실패";
             }
 
@@ -163,6 +210,49 @@ try {
             $res->isSuccess = TRUE;
             $res->code = 100;
             $res->message = "여행일정 제목수정 성공";
+
+            echo json_encode($res, JSON_NUMERIC_CHECK);
+            break;
+
+        /*
+         * API No. 0
+         * API Name : JWT 유효성 검사 테스트 API
+         * 마지막 수정 날짜 : 19.04.25
+         */
+        case "scheduleDelete":
+
+            $jwt = $_SERVER["HTTP_X_ACCESS_TOKEN"];
+            $jwtAuth = isValidHeader($jwt, JWT_SECRET_KEY);
+
+            if (!$jwtAuth) {
+                $res->isSuccess = FALSE;
+                $res->code = 200;
+                $res->message = "유효하지 않은 토큰입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+            }
+            http_response_code(200);
+
+            $userId = $jwtAuth["id"];
+            $deFlightId = $req->deFlightId;
+            $reFlightId = $req->reFlightId;
+
+            //validation gogo
+
+            if(!scheduleItemAuth($userId,$deFlightId,$reFlightId)){
+                $res->isSuccess = FALSE;
+                $res->code = 300;
+                $res->message = "유효하지 않은 항공권번호 입니다";
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+            }
+
+
+            scheduleDelete($userId,$deFlightId,$reFlightId);
+
+            $res->isSuccess = TRUE;
+            $res->code = 100;
+            $res->message = "여행일정 개별 삭제 성공";
 
             echo json_encode($res, JSON_NUMERIC_CHECK);
             break;

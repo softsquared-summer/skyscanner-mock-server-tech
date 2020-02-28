@@ -190,9 +190,8 @@ function getOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode,$sort
     $st->setFetchMode(PDO::FETCH_ASSOC);
     $res = $st->fetchAll();
 
-    $temp = [];
-
     for($i=0;$i<count($res);$i++){
+        $temp = [];
 
         $h = (int)$res[$i]["hour"];
         $m = (int)$res[$i]["min"];

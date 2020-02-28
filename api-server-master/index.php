@@ -48,7 +48,10 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
     $r->addRoute('PATCH', '/schedule/item', ['ScheduleController', 'scheduleDelete']);
     $r->addRoute('DELETE', '/schedule/{roomId}', ['ScheduleController', 'scheduleDeleteAll']);
 
+
+    $r->addRoute('GET', '/user/flight', ['UserController', 'isSaved']);
     $r->addRoute('POST', '/user', ['UserController', 'signUp']);
+    $r->addRoute('DELETE', '/user', ['UserController', 'byeBye']);
 
 
     $r->addRoute('GET', '/auth/jwt', ['UserController', 'jwtAuth']);
