@@ -604,6 +604,7 @@ function addFlightsList($flightsList,$date){
 
     $minId = $min[0]["minId"];
     $maxId = $min[0]["maxId"];
+    
     if($minId){
       $query = "DELETE from flights WHERE id >= ? AND id <= ?;";
 

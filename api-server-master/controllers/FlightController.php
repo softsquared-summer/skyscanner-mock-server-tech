@@ -11,7 +11,7 @@ $req = json_decode(file_get_contents("php://input"));
 try {
     addAccessLogs($accessLogs, $req);
     switch ($handler) {
-        
+
         /*
          * API No. 3
          * API Name : 테스트 Body & Insert API
@@ -240,11 +240,16 @@ try {
 //            }
 
             $date="2020-04-01";
-            for($i=0;$i<$total;$i++){
-                $airPortCode = $airPortsList[$i]["airPortCode"];
-                $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
-                addFlightsList($flightsList,$date);
-            }
+
+            // for($i=0;$i<$total;$i++){
+            //     $airPortCode = $airPortsList[$i]["airPortCode"];
+            //     $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
+            //     addFlightsList($flightsList,$date);
+            // }
+
+            $airPortCode = $airPortsList[0]["airPortCode"];
+            $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
+            addFlightsList($flightsList,$date);
 
             $res->isSuccess = TRUE;
             $res->code = 100;
