@@ -600,15 +600,11 @@ function addFlightsList($flightsList,$date){
     $st = $pdo->prepare($query);
     $st->execute([$date]);
     $st->setFetchMode(PDO::FETCH_ASSOC);
-    $minId = $st->fetchAll();
+    $min = $st->fetchAll();
 
-    $minId = $minId[0]["minId"];
-    $maxId = $minId[0]["maxId"];
-    echo $minId."\n";
-    echo $maxId."\n";
-
+    $minId = $min[0]["minId"];
+    $maxId = $min[0]["maxId"];
     if($minId){
-      echo "test\n";
       $query = "DELETE from flights WHERE id >= ? AND id <= ?;";
 
       $st = $pdo->prepare($query);
