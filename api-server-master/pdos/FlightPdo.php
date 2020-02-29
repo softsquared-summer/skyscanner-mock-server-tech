@@ -16,7 +16,7 @@ function getAirPortsList(){
     $pdo = null;
 
     return $res;
-    
+
 }
 
 function getDailyOneFlightsList($deAirPortCode,$arAirPortCode,$deDate,$seatCode){
@@ -306,9 +306,9 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
 
     $query = "SELECT de.airLineKr, de.airLineEn,de.airLineImg, de.adultPrice AS deAdultPrice,de.infantPrice AS deInfantPrice,de.childPrice AS deChildPrice,
                 ar.adultPrice AS arAdultPrice,ar.infantPrice AS arInfantPrice,ar.childPrice AS arChildPrice
-                
+
                 FROM
-                
+
                 (
                 SELECT airLineKr, airLineEn,airLineImg, MIN(adultPrice) as adultPrice, MIN(infantPrice) as infantPrice, MIN(childPrice) as childPrice
                 FROM
@@ -321,9 +321,9 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
                 ) as t
                 GROUP BY airLineKr, airLineEn,airLineImg ORDER BY adultPrice ASC
                 ) AS de
-                
+
                 JOIN
-                
+
                 (
                 SELECT airLineKr, airLineEn,airLineImg, MIN(adultPrice) as adultPrice, MIN(infantPrice) as infantPrice, MIN(childPrice) as childPrice
                 FROM
@@ -336,7 +336,7 @@ function getDailyRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,
                 ) as t
                 GROUP BY airLineKr, airLineEn,airLineImg ORDER BY adultPrice ASC
                 ) AS ar
-                
+
                 ON de.airLineKr = ar.airLineKr
                 ORDER BY deAdultPrice ASC, airLineKr ASC;";
 
@@ -593,12 +593,34 @@ function getRoundFlightsList($deAirPortCode,$arAirPortCode,$deDate,$arDate,$seat
 
 function addFlightsList($flightsList,$date){
 
+    $pdo = pdoSqlConnect();
+    $query = "SELECT MIN(id) AS minId, MAX(id) AS maxId FROM flights WHERE DATE(deDate) = ?;";
+
+
+    $st = $pdo->prepare($query);
+    $st->execute([$date]);
+    $st->setFetchMode(PDO::FETCH_ASSOC);
+    $minId = $st->fetchAll();
+
+    $minId = $minId[0]["minId"];
+    $maxId = $minId[0]["maxId"];
+
+    if($minId){
+      $query = "DELETE from flights WHERE id >= ? AND id <= ?;";
+
+      $st = $pdo->prepare($query);
+      $st->execute([$minId,$maxId]);
+
+      $query = "DELETE from prices WHERE flightId >= ? AND flightId <= ?;";
+
+      $st = $pdo->prepare($query);
+      $st->execute([$minId,$maxId]);
+    }
+
     $flightsList = $flightsList["item"];
 
     $priceArray = [[20000,15000,10000],[40000,35000,30000],[60000,55000,50000],[80000,75000,70000]];
     $seatNameArray = ["일반석","프리미엄 일반석","비즈니스석","일등석"];
-
-    $pdo = pdoSqlConnect();
 
     $total = count($flightsList);
 
