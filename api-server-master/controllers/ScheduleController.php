@@ -122,7 +122,7 @@ try {
             $infantCount = $req->infantCount;
             $childCount = $req->childCount;
 
-            if($roomId==null || $deFlightId==null){
+            if($deFlightId==null){
                 $res->isSuccess = FALSE;
                 $res->code = 500;
                 $res->message = "필수적인 파라미터를 모두 입력해주세요";
