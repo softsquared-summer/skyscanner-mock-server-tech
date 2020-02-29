@@ -39,7 +39,7 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
     $r->addRoute('GET', '/flight', ['AroundController', 'aroundFlightsList']);
 
-//    $r->addRoute('POST', '/flight', ['FlightController', 'synchronization']);
+    $r->addRoute('GET', '/flight/sync', ['FlightController', 'synchronization']);
 
     $r->addRoute('GET', '/schedule', ['ScheduleController', 'scheduleList']);
     $r->addRoute('GET', '/schedule/{roomId}', ['ScheduleController', 'schedule']);

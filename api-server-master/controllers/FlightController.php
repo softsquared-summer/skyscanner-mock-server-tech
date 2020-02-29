@@ -222,24 +222,29 @@ try {
 
             //나중에 날짜도 추가해야함
 
-            for($j=26;$j<=31;$j++){
+//            for($j=26;$j<=31;$j++){
+//
+//                if($j<10){
+//                    $date="2020-03-0".$j;
+//                }
+//                else{
+//                    $date="2020-03-".$j;
+//                }
+//
+//                for($i=0;$i<$total;$i++){
+//                    $airPortCode = $airPortsList[$i]["airPortCode"];
+//                    $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
+//                    addFlightsList($flightsList,$date);
+//                }
+//
+//            }
 
-                if($j<10){
-                    $date="2020-03-0".$j;
-                }
-                else{
-                    $date="2020-03-".$j;
-                }
-
-                for($i=0;$i<$total;$i++){
-                    $airPortCode = $airPortsList[$i]["airPortCode"];
-                    $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
-                    addFlightsList($flightsList,$date);
-                }
-
+            $date="2020-04-01";
+            for($i=0;$i<$total;$i++){
+                $airPortCode = $airPortsList[$i]["airPortCode"];
+                $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
+                addFlightsList($flightsList,$date);
             }
-
-
 
             $res->isSuccess = TRUE;
             $res->code = 100;
