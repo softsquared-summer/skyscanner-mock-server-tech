@@ -236,6 +236,35 @@ try {
                 break;
             }
 
+            /*
+             * API No. 1
+             * API Name : JWT 생성 테스트 API (로그인)
+             * 마지막 수정 날짜 : 19.04.25
+             */
+            case "googleAuth":
+
+
+                $googleToken = $_GET["access_token"];
+
+                $googleEmail = getEmailByGoogle($googleToken);
+
+                if(!$googleEmail){
+                  $res->isSuccess = FALSE;
+                  $res->code = 200;
+                  $res->message = "유효하지 않은 토큰입니다";
+                  echo json_encode($res, JSON_NUMERIC_CHECK);
+                  return;
+                }
+
+                http_response_code(200);
+                $res->result = $result;
+                $res->isSuccess = TRUE;
+                $res->code = 100;
+                $res->message = "유효한 토큰입니다";
+
+                echo json_encode($res, JSON_NUMERIC_CHECK);
+                break;
+
     }
 } catch (\Exception $e) {
     return getSQLErrorException($errorLogs, $e, $req);

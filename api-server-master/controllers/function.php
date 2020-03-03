@@ -7,6 +7,28 @@ use Google\Auth\ApplicationDefaultCredentials;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 
+function getEmailByGoogle($accessToken){
+  $url = "http://adsfasdsdafasdfsdaf/?adsfadsf";
+
+  $curl = curl_init();
+
+  $timeout = 5; // 0으로 하면 시간제한이 없다.
+
+  curl_setopt($curl, CURLOPT_URL, $url);
+
+  curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+  curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $timeout);
+
+  $result =  curl_exec($curl);
+
+  $data = json_decode($result);
+
+  return $data[0]["email"];
+}
+
 function getSQLErrorException($errorLogs, $e, $req)
 {
     $res = (Object)Array();

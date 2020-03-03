@@ -55,11 +55,12 @@ $dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) 
 
 
     $r->addRoute('GET', '/auth/jwt', ['UserController', 'jwtAuth']);
+    $r->addRoute('GET', '/auth/google', ['UserController', 'googleAuth']);
     $r->addRoute('POST', '/auth/email', ['UserController', 'emailAuth']);
     $r->addRoute('POST', '/auth', ['UserController', 'signIn']);
 
 
-    
+
 
 });
 

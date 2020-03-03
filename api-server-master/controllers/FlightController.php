@@ -239,17 +239,13 @@ try {
 //
 //            }
 
-            $date="2020-04-01";
+            $date="2020-02-12";
 
-            // for($i=0;$i<$total;$i++){
-            //     $airPortCode = $airPortsList[$i]["airPortCode"];
-            //     $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
-            //     addFlightsList($flightsList,$date);
-            // }
-
-            $airPortCode = $airPortsList[0]["airPortCode"];
+            for($i=0;$i<$total;$i++){
+            $airPortCode = $airPortsList[$i]["airPortCode"];
             $flightsList = getFlightsListAPI(API_KEY,$airPortCode);
             addFlightsList($flightsList,$date);
+            }
 
             $res->isSuccess = TRUE;
             $res->code = 100;
